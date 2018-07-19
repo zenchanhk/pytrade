@@ -1,0 +1,76 @@
+
+[2018-06-26 18:43:06] Traceback (most recent call last):
+  File "c:\Users\ho\.vscode\extensions\ms-python.python-2018.6.0\pythonFiles\PythonTools\visualstudio_py_launcher.py", line 91, in <module>
+    vspd.debug(filename, port_num, debug_id, debug_options, currentPid, run_as)
+  File "c:\Users\ho\.vscode\extensions\ms-python.python-2018.6.0\pythonFiles\PythonTools\visualstudio_py_debugger.py", line 2629, in debug
+    del THREADS[cur_thread.id]
+KeyError: 8288
+
+
+[2018-06-27 16:38:25] Traceback (most recent call last):
+  File "c:\Users\ho\.vscode\extensions\ms-python.python-2018.6.0\pythonFiles\PythonTools\visualstudio_py_launcher.py", line 91, in <module>
+    vspd.debug(filename, port_num, debug_id, debug_options, currentPid, run_as)
+  File "c:\Users\ho\.vscode\extensions\ms-python.python-2018.6.0\pythonFiles\PythonTools\visualstudio_py_debugger.py", line 2625, in debug
+    exec_file(file, globals_obj)
+  File "c:\Users\ho\.vscode\extensions\ms-python.python-2018.6.0\pythonFiles\PythonTools\visualstudio_py_util.py", line 119, in exec_file
+    exec_code(code, file, global_variables)
+  File "c:\Users\ho\.vscode\extensions\ms-python.python-2018.6.0\pythonFiles\PythonTools\visualstudio_py_util.py", line 95, in exec_code
+    exec(code_obj, global_variables)
+  File "d:\ib\t1\py\main.py", line 169, in <module>
+    main()
+  File "d:\ib\t1\py\main.py", line 22, in main
+    set_javascript_bindings(browser)
+  File "d:\ib\t1\py\main.py", line 73, in set_javascript_bindings
+    external = External(browser)
+NameError: name 'External' is not defined
+
+
+[2018-06-29 20:07:25] Traceback (most recent call last):
+  File "c:\Users\ho\.vscode\extensions\ms-python.python-2018.6.0\pythonFiles\PythonTools\visualstudio_py_launcher.py", line 91, in <module>
+    vspd.debug(filename, port_num, debug_id, debug_options, currentPid, run_as)
+  File "c:\Users\ho\.vscode\extensions\ms-python.python-2018.6.0\pythonFiles\PythonTools\visualstudio_py_debugger.py", line 2625, in debug
+    exec_file(file, globals_obj)
+  File "c:\Users\ho\.vscode\extensions\ms-python.python-2018.6.0\pythonFiles\PythonTools\visualstudio_py_util.py", line 119, in exec_file
+    exec_code(code, file, global_variables)
+  File "c:\Users\ho\.vscode\extensions\ms-python.python-2018.6.0\pythonFiles\PythonTools\visualstudio_py_util.py", line 95, in exec_code
+    exec(code_obj, global_variables)
+  File "d:\ib\t1\py\main.py", line 175, in <module>
+    main()
+  File "d:\ib\t1\py\main.py", line 23, in main
+    set_javascript_bindings(browser)
+  File "d:\ib\t1\py\main.py", line 74, in set_javascript_bindings
+    symbol = Symbol(browser, ib)
+NameError: name 'ib' is not defined
+
+
+[2018-06-29 21:10:34] Traceback (most recent call last):
+  File "c:\Users\ho\.vscode\extensions\ms-python.python-2018.6.0\pythonFiles\PythonTools\visualstudio_py_launcher.py", line 91, in <module>
+    vspd.debug(filename, port_num, debug_id, debug_options, currentPid, run_as)
+  File "c:\Users\ho\.vscode\extensions\ms-python.python-2018.6.0\pythonFiles\PythonTools\visualstudio_py_debugger.py", line 2625, in debug
+    exec_file(file, globals_obj)
+  File "c:\Users\ho\.vscode\extensions\ms-python.python-2018.6.0\pythonFiles\PythonTools\visualstudio_py_util.py", line 119, in exec_file
+    exec_code(code, file, global_variables)
+  File "c:\Users\ho\.vscode\extensions\ms-python.python-2018.6.0\pythonFiles\PythonTools\visualstudio_py_util.py", line 95, in exec_code
+    exec(code_obj, global_variables)
+  File "d:\ib\t1\py\main.py", line 183, in <module>
+    main()
+  File "d:\ib\t1\py\main.py", line 18, in main
+    if WINDOWS:
+NameError: name 'WINDOWS' is not defined
+
+
+[2018-06-29 21:15:50] Traceback (most recent call last):
+  File "c:\Users\ho\.vscode\extensions\ms-python.python-2018.6.0\pythonFiles\PythonTools\visualstudio_py_launcher.py", line 91, in <module>
+    vspd.debug(filename, port_num, debug_id, debug_options, currentPid, run_as)
+  File "c:\Users\ho\.vscode\extensions\ms-python.python-2018.6.0\pythonFiles\PythonTools\visualstudio_py_debugger.py", line 2625, in debug
+    exec_file(file, globals_obj)
+  File "c:\Users\ho\.vscode\extensions\ms-python.python-2018.6.0\pythonFiles\PythonTools\visualstudio_py_util.py", line 119, in exec_file
+    exec_code(code, file, global_variables)
+  File "c:\Users\ho\.vscode\extensions\ms-python.python-2018.6.0\pythonFiles\PythonTools\visualstudio_py_util.py", line 95, in exec_code
+    exec(code_obj, global_variables)
+  File "d:\ib\t1\py\main.py", line 187, in <module>
+    main()
+  File "d:\ib\t1\py\main.py", line 20, in main
+    auto_zooming: "0.0"
+NameError: name 'auto_zooming' is not defined
+
