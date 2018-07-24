@@ -144,13 +144,14 @@
 <template>
     <div v-on-clickaway="away">
         <div @click="onClick" class="container" :style="disabled">
-            <a-input-search ref="search"
+            <a-input-search ref="sbox"
                 :placeholder="placeholder" 
                 class='search'
                 @focus="onfocus" 
                 @blur="onblur"
                 @search="search"
-                @keydown.esc="close"
+                @keydown.esc="closeDropdown"
+                v-model="sValue"
                 />
             <div class="spin" v-show="this.loading"><a-spin size="small" /></div>            
             <div v-show="!isEditing" class="label" :style="label_color">
@@ -232,14 +233,15 @@ export default {
         }
     },
     data () {
-        moment();
+        //moment();
         return {        
             //data: this.props.data,
+            sValue: '', //searchbox value
             isEditing: false,
             showLabel: this.label,
-            selectedItem: null,
+            selectedItem: null, //contract
             loading: false,
-            isAway: false,
+            isAway: false,  //lose focus
         };
     },    
     computed: {
@@ -291,11 +293,18 @@ export default {
             if (!this.disabled) {
                 this.isEditing = true;
                 this.isAway= false;
-                this.$refs.search.focus();
+                this.$refs.sbox.focus();
             }           
         },
         closeDropdown() {
             this.$refs.menu.close();
+        },
+        clear() {                    
+            if (this.sValue) {
+                this.sValue = '';            
+                this.cancelMktData({selectedItem: {id: this.id, value: this.selectedItem}});
+                this.selectedItem = null;
+            }            
         },
         away() {
             //click outside
@@ -309,35 +318,29 @@ export default {
             this.selectedItem = item;
             this.isEditing = false;
             this.closeDropdown();
-            console.log(item);
-            this.reqMktData({contract: item, selectedItem: {id: this.id, value: item}});
-            setTimeout(() => {
-                // this.cancelMktData({contract: item});
-            }, 10000);
+            //console.log(item);
+            this.reqMktData({contract: item, selectedItem: {id: this.id, value: item}});            
         },
         onfocus(e) {
-            console.log(e);
+            //console.log(e);
             e.target.select();
             this.isEditing = true;
-            //console.log(this.symbol);
-            //console.log(this.currentItem(this.id));
-            //this.test({id: 's1', data: 'testing data'});
         },
         onblur() {
             
         },
         async search(val) {
-            this.loading = true;
-            await this.reqContractDetails({id: this.id, code: val});
-            if (!this.isAway) {
-                this.$refs.menu.open();
-            }            
-            this.loading = false;
-            
-            //setTimeout(() => {
-            //    this.loading = false;
-            //    this.$refs.menu.open();
-            //}, 1000);
+            if (val) {
+                this.loading = true;
+                await this.reqContractDetails({id: this.id, code: val});
+                if (!this.isAway) {
+                    this.$refs.menu.open();
+                }            
+                this.loading = false;
+            } else {
+                this.cancelMktData({selectedItem: {id: this.id, value: this.selectedItem}});
+                this.selectedItem = null;
+            }                        
         }
     }
 };

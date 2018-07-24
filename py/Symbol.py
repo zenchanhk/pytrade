@@ -345,20 +345,20 @@ class Symbol:
         if type(contract) is int:
             contract = Contract(conId=contract)
         #var containing full details
-        full_c = Struct(*'conId secType symbol lastTradeDateOrContractMonth \
-                        localSymbol exchange primaryExchange currency multiplier tradingClass'.split())()
+        #full_c = Struct(*'conId secType symbol lastTradeDateOrContractMonth \
+        #                localSymbol exchange primaryExchange currency multiplier tradingClass'.split())()
         #get the full detail of contract        
         #tmp = await ib.reqContractDetailsAsync(contract)
         #copy(tmp[0], full_c)
         #copy(tmp[0].contract, full_c)
         #c = Contract(conId=full_c.conId, exchange=full_c.exchange)
         await ib.qualifyContractsAsync(contract)
-        copy(contract, full_c)
+        #copy(contract, full_c)
         #start to request market data
         ib.reqMarketDataType(4) #enable delayed-frozen data
         ib.reqMktData(contract, '', False, False)
         #append the contract to subscription dict
-        self.subscriptions[contract.conId] = full_c
+        self.subscriptions[contract.conId] = contract
         #add listener to tiker event for getting new tickers
         ib.pendingTickersEvent += self.__onPendingTickers
         print('subscribed')

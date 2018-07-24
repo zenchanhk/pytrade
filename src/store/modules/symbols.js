@@ -134,10 +134,15 @@ const actions = {
         symbol.subMktData(contract.conId, mktDataCallback);
         //console.log('out of reqMktData:');
     },
-    // eslint-disable-next-line
-    cancelMktData({ commit }, {contract}) {
-        // eslint-disable-next-line
-        symbol.unsubMktData(contract.conId);
+    cancelMktData({ commit }, {selectedItem}) {
+        if (selectedItem.value) {
+            commit('fillSelectedItem', {item: {id: selectedItem.id, value: null}});
+            commit('removeTicker', {contract: selectedItem.value});
+            if (selectedItem.value && selectedItem.value.conId) {
+            // eslint-disable-next-line
+            symbol.unsubMktData(selectedItem.value.conId);
+            }     
+        }           
     }
 };
 
@@ -161,6 +166,9 @@ const mutations = {
                 state.tickers = tmp;
             });
         }        
+    },
+    removeTicker(state, {contract}) {
+        delete state.tickers[contract.conId];
     },
     fillHisData(state, {data}) {
         //console.log('fillTicker(commit):');

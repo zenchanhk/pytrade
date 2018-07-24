@@ -69,8 +69,14 @@
     .data-icon-container {
         display: flex;
         flex-direction: row;
-        justify-content: space-around;
-        
+        justify-content: space-around;        
+    }
+    .icon-btn-div {
+        display: flex;
+        flex-direction: column;
+        margin-left: 3px;
+        height: 68px;
+        justify-content: space-between;
     }
 </style>
 
@@ -80,17 +86,18 @@
             <div>
                 <div class="order1">                
                     <symbol-search 
+                        ref='search1'
                         id='s1' 
                         placeholder="Enter code..." 
                         @select="(item)=>onSelect('s1', item)"
                         :disabled="pending"/>
                     <a-input-number 
-                        :min="1" 
-                        :max="10" 
+                        :min="0" 
+                        :max="10000" 
                         :disabled="pending"
                         :flat="true"
                         v-model="lots1" 
-                        @change="(val)=>onLotsChange(val, 0)"
+                        @change="(val)=>onLotsChange(val, 's1')"
                         placeholder="Enter #lots" 
                         class="lots" />
                     <a-select                     
@@ -98,7 +105,7 @@
                         class="direction" 
                         placeholder="Direction"
                         :disabled="pending"                    
-                        @change="(val)=>onDirChange(val, 0)">
+                        @change="(val)=>onDirChange(val, 's1')">
                         <a-select-option 
                             v-for="item in dirs" 
                             :value="item.value" 
@@ -109,16 +116,17 @@
                 </div>
                 <div class="order2">
                     <symbol-search 
+                        ref='search2'
                         id='s2' 
                         placeholder="Enter code..." 
                         @select="(item)=>onSelect('s2', item)"
                         :disabled="pending"/>
                     <a-input-number 
-                        :min="1" 
-                        :max="10" 
+                        :min="0" 
+                        :max="10000" 
                         :disabled="pending"
                         v-model="lots2" 
-                        @change="(val)=>onLotsChange(val, 1)" 
+                        @change="(val)=>onLotsChange(val, 's2')" 
                         placeholder="Enter #lots" 
                         class="lots" />
                     <a-select 
@@ -126,7 +134,7 @@
                         class="direction" 
                         placeholder="Direction"
                         :disabled="pending"
-                        @change="(val)=>onDirChange(val, 1)">
+                        @change="(val)=>onDirChange(val, 's2')">
                         <a-select-option 
                             v-for="item in dirs" 
                             :value="item.value" 
@@ -137,14 +145,19 @@
                 </div>            
             </div>
             <div class="btn-div">
-                <a-button @click="swap" :disabled="pending" type="primary" shape="circle">
-                    <icon name="swap" :scale="1.5" color='white'></icon>
-                </a-button>             
+                <div class="icon-btn-div">
+                    <a-button @click="swap" :disabled="pending" type="primary" shape="circle">
+                        <icon name="swap" :scale="1.6" color='white'></icon>
+                    </a-button>  
+                    <a-button @click="calculate" :disabled="pending" type="primary" shape="circle">
+                        <icon name="calculate" :scale="1.6" color='white'></icon>
+                    </a-button>
+                </div>           
                 <a-button @click="order" class="btn"
                     :style="{'background-color': this.pending ? 'red':'rgb(41, 211, 41)'}">
                     {{!this.pending? "Order" : "Cancel"}}
                 </a-button>
-                <a-button @click="clear($event)" :disabled="pending" shape="circle" 
+                <a-button @click="clearAll" :disabled="pending" shape="circle" 
                     :style="{'background-color': this.pending ? '#F5F5F5':'red'}">
                     <icon name="clear" :scale="1.5" :color="this.pending ? 'white' : 'yellow'"></icon>
                 </a-button>  
@@ -187,7 +200,7 @@
 
 <script>
 import Vue from 'vue';
-import { mapGetters } from 'vuex';
+import { mapGetters, mapActions } from 'vuex';
 import SymbolSearch  from './symbol-search.vue';
 import { isNumeric } from '../utils/tools.js';
 import * as moment from 'moment';
@@ -283,10 +296,6 @@ export default {
             columns,
             //data: [],
             value: null,
-            lots1: null,
-            lots2: null,
-            dir1: null,
-            dir2: null,
             dirs: [
                 {value: 0, label: 'Up'},
                 {value: 1, label: 'Down'},
@@ -298,7 +307,17 @@ export default {
             currentItem: 'getCurItem',
             data: 'getMktData',         //get market data for symbols
             selectedItems: 'getSelectedItems'
-        })
+        }),
+        ...mapGetters('orders', [
+            'lots1',
+            'lots2',
+            'dir1',
+            'dir2'
+        ]),
+        ...mapGetters('settings', [
+            'lotslinked',
+            'dirlinked'
+        ]),
     },
     watch: {
         /* used when getMktData returns a promise
@@ -310,6 +329,12 @@ export default {
         }*/
     },
     methods: {
+        ...mapActions('orders', {
+                'swap': 'swap',
+                'changeLots': 'changeLots',
+                'calLinkedLots': 'calLinkedLots',
+                'clear': 'clear'
+            }),
         order() {
             this.pending = !this.pending;
             console.log(this.pending);
@@ -321,21 +346,34 @@ export default {
 
         },
         swap() {
-
+            this.swap();
         },
-        clear(event) {
-            console.log(event);
+        clearAll(event) {
+            this.clear();
+            this.$refs.search1.clear();
+            this.$refs.search2.clear();
         },
         onSelect(id, item) {
             
         },
         onLotsChange(val, id) {
-            //console.log(val);
-            //console.log(id);
+            if (val && val > 0) {
+                this.changeLots({id: id, lots: val});
+                if (this.lotsLinked)
+                    this.calLinkedLots({id});
+            }            
+        },
+        calculate() {
+            if (this.lots1 && !this.lots2) {
+                this.calLinkedLots({id: 's1'});
+            }
+            if (!this.lots1 && this.lots2) {
+                this.calLinkedLots({id: 's2'});
+            }
         },
         onDirChange(val, id) {
-            //console.log(val);
-            //console.log(id);
+            if (this.dirLinked)
+                this.swap();
         }
     }
 }

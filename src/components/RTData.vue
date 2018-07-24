@@ -5,10 +5,14 @@
 </style>
 
 <template>
+<div>
     <a-table class="tbl" :columns="columns" :dataSource="data" :scroll="{ x: 1500, y: 300 }" size="small" >
         <a slot="action" slot-scope="text" href="#">action</a>
         
     </a-table>
+    <a-button @click="onClick">test</a-button>
+    <a-input-search ref='test' v-model="val" />
+</div>
 </template>
 
 <script>
@@ -45,8 +49,15 @@ export default {
                     
         return {
             columns,
-            data
+            data,
+            val: '123'
         };
+    },
+    methods: {
+        onClick() {
+            //this.$refs.test.value='test';
+            this.val = 'HelloWorld.vue';
+        },
     }
 };
 </script>

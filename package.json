@@ -24,7 +24,7 @@
     "moment": "^2.22.2",
     "v-charts": "^1.17.8",
     "vue": "^2.5.2",
-    "vue-antd-ui": "^0.6.3",
+    "vue-antd-ui": "^0.6.8",
     "vue-clickaway": "^2.2.2",
     "vue-context": "^3.1.1",
     "vue-draggable-resizable": "^1.7.1",

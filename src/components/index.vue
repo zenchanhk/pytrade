@@ -111,6 +111,8 @@
                 </Pane>
                 <Pane title="Miscellaneous">
                     <a-button @click="onClick">test</a-button>
+                    <input ref='test' :value="val" />
+                    
                 </Pane>
             </Layout>
         </div> 
@@ -203,7 +205,7 @@
         data () {
 
             return {              
-                
+                val: '',
                 state: {
                     extraStyle: false,
                     edit: true,
@@ -217,6 +219,11 @@
                 posX: 2,
                 posY: 2,
             };
+        },
+        watch: {
+            val: function(v) {
+                console.log(v);
+            }
         },
         computed: {
             ...mapState('status', [
@@ -258,7 +265,8 @@
                 //this.$refs.showSettingBtn.blur();
             },
             onClick() {
-                
+                //this.$refs.test.value='test';
+                this.val = 'HelloWorld.vue';
             },
             onResize() {
                 console.log(this.$el.clientWidth);

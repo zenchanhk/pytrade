@@ -156,10 +156,12 @@ class IBConnector:
             if (self.last_msg != None):
                 self.__callback(self.last_msg)
                 #resend STATUS.CONNECTED in case of getStatus
-                if (self.last_msg != STATUS.CONNECTED and self.ib.isConnected()):
+                if (self.last_msg != STATUS.CONNECTED and self.ib and self.ib.isConnected()):
                     STATUS.CONNECTED['port'] = self.ports[self.port_used_idx]
                     STATUS.CONNECTED['account'] = self.port_names[self.port_used_idx]
                     self.status_cb.Call(json.dumps(STATUS.CONNECTED, default=lambda o:o.__dict__ ))
+                    if self.serverConnected:
+                        self.__callback(IBServerConnectivity.CONNECTION_REESTABLISHED)
 
     def connect(self):
         t = threading.Thread(target=self.connectIB)
@@ -285,11 +287,12 @@ class IBConnector:
 
     async def testIBServerConnectivity(self):
         c = Forex('EURUSD')
-        await self.ib.qualifyContractsAsync(c)
-        if (c.conId > 0):
-            self.__callback(IBServerConnectivity.CONNECTION_REESTABLISHED)
-        else:
-            self.__callback(IBServerConnectivity.CONNECTION_LOST)        
+        if (self.ib and self.ib.isConnected()):
+            await self.ib.qualifyContractsAsync(c)
+            if (c.conId > 0):
+                self.__callback(IBServerConnectivity.CONNECTION_REESTABLISHED)
+            else:
+                self.__callback(IBServerConnectivity.CONNECTION_LOST)        
 
     def getPIB(self):
         if (self.ib.isConnected()):            

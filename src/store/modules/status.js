@@ -4,7 +4,7 @@ function setCommit(c) {
     commit = c;
 }
 function statusCallback(status) {
-    console.log(status);
+    //console.log(status);
     actions.changeStatus({commit}, {data: status});       
 }
 
@@ -105,7 +105,7 @@ const mutations = {
         }        
         //state.description = s.desc;
         //console.log(state);
-        console.log(state.action);
+        //console.log(state.action);
     }
 };
 
