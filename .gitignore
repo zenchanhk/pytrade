@@ -1,5 +1,8 @@
 .DS_Store
 node_modules/
+backup/
+build/nsis/
+py/__pycache__/
 /dist/
 npm-debug.log*
 yarn-debug.log*

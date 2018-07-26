@@ -30,6 +30,7 @@
     "vue-draggable-resizable": "^1.7.1",
     "vue-grid-layout": "^2.1.13",
     "vue-i18n": "^5.0.3",
+    "vue-observe-visibility": "^0.4.1",
     "vue-resize-directive": "^1.0.1",
     "vue-resizesensor": "^0.2.1",
     "vue-router": "^3.0.1",

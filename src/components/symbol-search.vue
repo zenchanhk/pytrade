@@ -304,6 +304,7 @@ export default {
                 this.sValue = '';            
                 this.cancelMktData({selectedItem: {id: this.id, value: this.selectedItem}});
                 this.selectedItem = null;
+                this.$emit('clear');
             }            
         },
         away() {

@@ -17,16 +17,15 @@ const state = {
 const sections = ['link','ib','toolbar'];
 // actions
 const actions = {
-    save({section, cfg}) {
-        // eslint-disable-next-line
-        config.saveAppCfg(section, cfg);
-    },
-    async asyncSave({section, cfg}) {
+    async asyncSave({ commit }, {cfg}) {
+        /* cfg should include section */
         return new Promise((resolve, reject) => {
             // eslint-disable-next-line
-            config.saveAppCfg(section, cfg, (result) => {
-                if (result == 'OK')
+            config.saveAppCfg(cfg, (result) => {
+                if (result == 'OK') {                    
+                    commit('changeSettings', {data: cfg});
                     resolve(true);
+                }                    
                 else
                     reject(false);
             });
@@ -35,8 +34,6 @@ const actions = {
     read({commit}) { 
         // eslint-disable-next-line
         config.readAppCfg(sections, (result) => {
-            //console.log('readsettings:');
-            //console.log(result);
             commit('readSettings', {data: result});
         });
     }
@@ -45,8 +42,8 @@ const actions = {
 //getters
 const getters = {
     posX: state => {
-        console.log('posX');
-        console.log(parseInt(state.toolbar.posX));
+        //console.log('posX');
+        //console.log(parseInt(state.toolbar.posX));
         return parseInt(state.toolbar.posX);
     },
     posY: state => {
@@ -54,10 +51,12 @@ const getters = {
         //return 100;
     },
     lotslinked: state => {
-        return state.link.lotslinked;
+        return typeof(state.link.lotslinked) == typeof(true) ? state.link.lotslinked 
+            : state.link.lotslinked.toLowerCase() == 'true';
     },
     dirlinked: state => {
-        return state.link.dirlinked;
+        return typeof(state.link.dirlinked) == typeof(true) ? state.link.dirlinked 
+            : state.link.dirlinked.toLowerCase() == 'true';
     }
 };
 
@@ -68,7 +67,11 @@ const mutations = {
         for (let i = 0; i < data.length; i++) {
             state[sections[i]] = data[i];
         }
-        console.log(state);
+        //console.log(state);
+    },
+    changeSettings(state, {data}) {
+        Object.assign(state, JSON.parse(data));
+        state = Object.assign({}, state);
     }
 };
 

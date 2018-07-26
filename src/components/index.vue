@@ -276,11 +276,11 @@
                 this.$refs.settings.save()
                     .then(() => {
                         this.confirmLoading = false;
+                        this.settingsDialogVisiable = false;
                     });                
             },
             cancel() {
-                //this.$refs.settings.cancel();
-                this.saveSettings({ section: 'toolbar', cfg: JSON.stringify({posX: 23, posY: 23}) });
+                this.$refs.settings.cancel();                
             }
         }
 

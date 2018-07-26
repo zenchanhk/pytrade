@@ -69,7 +69,7 @@
     .data-icon-container {
         display: flex;
         flex-direction: row;
-        justify-content: space-around;        
+        /*justify-content: space-around;  */      
     }
     .icon-btn-div {
         display: flex;
@@ -90,13 +90,14 @@
                         id='s1' 
                         placeholder="Enter code..." 
                         @select="(item)=>onSelect('s1', item)"
+                        @clear="()=>onSymbolClear('s1')"
                         :disabled="pending"/>
                     <a-input-number 
                         :min="0" 
                         :max="10000" 
                         :disabled="pending"
                         :flat="true"
-                        v-model="lots1" 
+                        :value="lots1" 
                         @change="(val)=>onLotsChange(val, 's1')"
                         placeholder="Enter #lots" 
                         class="lots" />
@@ -104,7 +105,8 @@
                         defaultValue="Up"
                         class="direction" 
                         placeholder="Direction"
-                        :disabled="pending"                    
+                        :disabled="pending" 
+                        :value="dir1"                   
                         @change="(val)=>onDirChange(val, 's1')">
                         <a-select-option 
                             v-for="item in dirs" 
@@ -120,12 +122,13 @@
                         id='s2' 
                         placeholder="Enter code..." 
                         @select="(item)=>onSelect('s2', item)"
+                        @clear="()=>onSymbolClear('s2')"
                         :disabled="pending"/>
                     <a-input-number 
                         :min="0" 
                         :max="10000" 
                         :disabled="pending"
-                        v-model="lots2" 
+                        :value="lots2" 
                         @change="(val)=>onLotsChange(val, 's2')" 
                         placeholder="Enter #lots" 
                         class="lots" />
@@ -134,6 +137,7 @@
                         class="direction" 
                         placeholder="Direction"
                         :disabled="pending"
+                        :value="dir2"
                         @change="(val)=>onDirChange(val, 's2')">
                         <a-select-option 
                             v-for="item in dirs" 
@@ -170,7 +174,7 @@
                 class="tbl" 
                 :columns="columns" 
                 :dataSource="data" 
-                :scroll="{ x: 1050, y: 130 }"
+                :scroll="{ x: 1150, y: 130 }"
                 :pagination="false" 
                 size="small"
                  >
@@ -189,7 +193,11 @@
                     <div class="data-icon-container">
                         <span>{{record.last}}</span>
                     </div>
-                </span>                
+                </span>  
+                <span slot="total" slot-scope="text, record">
+                    <span><b>{{Math.round((record.last ? record.last : record.marketPrice) * 
+                        lookupLots(record.contract.conId))}}</b></span>
+                </span>                 
                 <a slot="action" slot-scope="text, record" @click="cancel(record.contract)">Cancel</a>
                 
             </a-table>
@@ -245,6 +253,15 @@ const columns = [
                 }
             };
         } },
+    { title: 'Total Price', key: 'total', width: 100, fixed: 'left',
+        scopedSlots: { customRender: 'total' },
+        customCell: function () {           
+            return {
+                style: {
+                    'background-color': 'yellow',
+                }
+            }
+        }   },
     { title: 'Volume', dataIndex: 'volume', key: '4', width: 80 },
     { title: 'Close', dataIndex: 'close', key: '5', width: 80 },
     { title: 'High', dataIndex: 'high', key: '6', width: 80 },
@@ -280,14 +297,7 @@ export default {
         SymbolSearch
     },
     props: {
-        lotsLinked: {
-            default: true,
-            type: Boolean
-        },
-        dirLinked: {
-            default: true,
-            type: Boolean
-        },
+        
     },
     data () {
         /*eslint-disable */            
@@ -306,7 +316,11 @@ export default {
         ...mapGetters('symbols', {
             currentItem: 'getCurItem',
             data: 'getMktData',         //get market data for symbols
-            selectedItems: 'getSelectedItems'
+            selectedItems: 'getSelectedItems',
+            //s1: "selected('s1')",
+            //s2: "selected('s2')",
+            s1: 's1',
+            s2: 's2',
         }),
         ...mapGetters('orders', [
             'lots1',
@@ -327,10 +341,38 @@ export default {
                 //this.data = result
             });
         }*/
+        s1: function(val) {
+            if (val && this.lotslinked) {
+                this.calLinkedLots({id: 's2'});
+            }
+            if (!val) {
+                this.changeLots({id: 's1', lots: 0});
+            }
+        },
+        s2: function(val) {
+            if (val && this.lotslinked) {
+                this.calLinkedLots({id: 's1'});
+            }
+            if (!val) {
+                this.changeLots({id: 's2', lots: 0});
+            }
+        },
+        dirlinked: function(val) {
+            if (val && dir1 == dir2) {
+                this.changeDir({id: 's1', dir: 0});
+                this.changeDir({id: 's2', dir: 1});
+            }
+        },
+        lotslinked: function(val) {
+            if (val) {
+                this.calculate();
+            }
+        }
     },
     methods: {
         ...mapActions('orders', {
                 'swap': 'swap',
+                'changeDir': 'changeDir',
                 'changeLots': 'changeLots',
                 'calLinkedLots': 'calLinkedLots',
                 'clear': 'clear'
@@ -342,38 +384,41 @@ export default {
         cancel(contract) {
             console.log(contract);
         },
-        onChange() {
-
-        },
-        swap() {
-            this.swap();
+        lookupLots(conId) {
+            return conId == this.s1.conId ? this.lots1 : this.lots2;
         },
         clearAll(event) {
             this.clear();
             this.$refs.search1.clear();
             this.$refs.search2.clear();
         },
+        onSymbolClear(id) {
+            this.changeLots({id: id, lots: 0});
+        },
         onSelect(id, item) {
-            
+            if (this.lotslinked)
+                this.calLinkedLots({id});
         },
         onLotsChange(val, id) {
             if (val && val > 0) {
                 this.changeLots({id: id, lots: val});
-                if (this.lotsLinked)
+                if (this.lotslinked)
                     this.calLinkedLots({id});
             }            
         },
         calculate() {
-            if (this.lots1 && !this.lots2) {
+            if ((this.lots1 && !this.lots2) || (this.lots1 && this.lots2)) {
                 this.calLinkedLots({id: 's1'});
             }
             if (!this.lots1 && this.lots2) {
                 this.calLinkedLots({id: 's2'});
             }
         },
-        onDirChange(val, id) {
-            if (this.dirLinked)
+        onDirChange(val, id) {            
+            if (this.dirlinked)
                 this.swap();
+            else
+                this.changeDir({id: id, dir: val});
         }
     }
 }

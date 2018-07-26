@@ -1,11 +1,9 @@
-import base64
-import platform
 import sys
 import threading
 from ib_insync import *
 import pandas as pd
 from utils.tools import copy, Struct
-import IBConnector
+from IBConnector import IBConnector
 from datetime import datetime
 import json
 import time

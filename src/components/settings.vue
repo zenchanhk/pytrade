@@ -46,14 +46,14 @@
 </style>
 
 <template>    
-    <div>   
+    <div v-observe-visibility="visibilityChanged">   
         <div class="div">
             <hr class='beginhr' />
             <span><b>Link Settings</b></span>
             <hr class='endhr' />
         </div>
-        <a-checkbox>Lots Linked</a-checkbox>
-        <a-checkbox >Direction Linked</a-checkbox>
+        <a-checkbox v-model="ll" >Lots Linked</a-checkbox>
+        <a-checkbox v-model="dl" >Direction Linked</a-checkbox>
         <!--div class="div top-margin">
             <hr class='beginhr' />
             <span><b>IB Connection Settings</b></span>
@@ -64,41 +64,55 @@
     </div>      
 </template>
 <script>
-    import { mapState, mapActions } from 'vuex';
+    import { mapGetters, mapActions } from 'vuex';
      
     export default {
         name: 'vue-settings', 
 
         data () {                    
             return {
-                confirmLoading: false,
-                lots_linked: true,
-                direction_linked: true,
+                needAssign: true,
+                ll: false,
+                dl: false,
             };
         },
-        computed: {
-            ...mapState('settings', {
-            
-            })
+        mounted() {
+            //this.ll = this.lotslinked;
+            //this.dl = this.dirlinked;
         },
-        watch: {
-            visible: function(val) {
-                console.log(val);
-            }
+        computed: {
+            ...mapGetters('settings', [
+                'lotslinked',
+                'dirlinked'
+            ]),
         },
         methods: {
-            ...mapActions('status', [
+            ...mapActions('settings', [
                 'asyncSave',
             ]),
+            visibilityChanged(isVisible, entry) {
+                // this will be trigger whenever the page being refreshed
+                if (this.needAssign) {
+                    this.ll = this.lotslinked;
+                    this.dl = this.dirlinked;
+                    this.needAssign = false;
+                } 
+                if (entry.intersectionRatio == 0) {
+                    this.needAssign = true;
+                }
+                //console.log(isVisible);
+                //console.log(entry);               
+            },
             save: async function() {                
                 var result = {
-                    lotslinked: this.lots_linked,
-                    dirlinked: this.direction_linked 
+                    link: {
+                        lotslinked: this.ll,
+                        dirlinked: this.dl 
+                    }                    
                 };
                 return new Promise((resolve, reject) => {
-                    this.asyncSave({section: 'link', cfg: JSON.stringify(result)})
-                        // eslint-disable-next-line
-                        .then(result => resolve(true)).catch(error => reject(false));
+                    this.asyncSave({cfg: JSON.stringify(result)})
+                        .then(result => resolve(result)).catch(error => reject(error));
                 });
             },
             cancel() {

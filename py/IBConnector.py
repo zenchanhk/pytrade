@@ -1,5 +1,3 @@
-import base64
-import platform
 import sys
 import collections
 from ib_insync import *
@@ -159,7 +157,7 @@ class IBConnector:
                 if (self.last_msg != STATUS.CONNECTED and self.ib and self.ib.isConnected()):
                     STATUS.CONNECTED['port'] = self.ports[self.port_used_idx]
                     STATUS.CONNECTED['account'] = self.port_names[self.port_used_idx]
-                    self.status_cb.Call(json.dumps(STATUS.CONNECTED, default=lambda o:o.__dict__ ))
+                    self.__callback(STATUS.CONNECTED)
                     if self.serverConnected:
                         self.__callback(IBServerConnectivity.CONNECTION_REESTABLISHED)
 
@@ -196,10 +194,10 @@ class IBConnector:
             print("connectIB err:")
             print(e)  
             #to enable to reconnect
-            self.connecting = False 
+            #self.connecting = False 
             await self.handleExceptions(e)
             print('finished')
-            self.connecting = False
+            #self.connecting = False
 
     def onError(self, reqId, errorCode, errorString, contract):
         print('onError: ')
@@ -232,7 +230,8 @@ class IBConnector:
         if (not self.connecting):
             self.__callback(STATUS.DISCONNECTED)
             self.connectEvent.notifyAll(STATUS.DISCONNECTED)
-            self.attempReconnect(self.reconnect_interval)
+            #self.attempReconnect(self.reconnect_interval)
+            self.connectIB()
         print('disconnected')
 
     def __callback(self, msg):
@@ -266,7 +265,8 @@ class IBConnector:
         if type(e) == ConnectionRefusedError and self.findErr('ConnectionRefusedError(10061'):
             self.api_errs = []
             #if all ports have been tried, then attempt to reconnect
-            if len(self.ports) == self.port_used_idx + 1:                
+            if len(self.ports) == self.port_used_idx + 1:     
+                self.connecting = False           
                 self.attempReconnect(self.reconnect_interval) 
             else: 
                 #try the next available port

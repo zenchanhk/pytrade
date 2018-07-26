@@ -41,6 +41,11 @@ const state = {
 
 //getters
 const getters = {
+    selected: (state) => (id) => {
+        return state.selected[id];
+    },
+    s1: (state) => state.selected['s1'],
+    s2: (state) => state.selected['s2'],
     getCurItem: (state) => (id) => {
         console.log('id:' + id);
         return state.codes[id];
@@ -125,6 +130,13 @@ const actions = {
     reqMktData({ commit, state }, {contract, selectedItem}) {
         //console.log('reqMktData:');
         //console.log(contract);
+
+        //remove old symbol request first
+        var item = {};
+        item.id = selectedItem.id;
+        item.value = state.selected[item.id];
+        actions.cancelMktData({commit}, {selectedItem: item});
+
         if (selectedItem) {
             commit('fillSelectedItem', {item: selectedItem});
             //console.log(state.selected);
@@ -139,8 +151,8 @@ const actions = {
             commit('fillSelectedItem', {item: {id: selectedItem.id, value: null}});
             commit('removeTicker', {contract: selectedItem.value});
             if (selectedItem.value && selectedItem.value.conId) {
-            // eslint-disable-next-line
-            symbol.unsubMktData(selectedItem.value.conId);
+                // eslint-disable-next-line
+                symbol.unsubMktData(selectedItem.value.conId);
             }     
         }           
     }
@@ -181,7 +193,8 @@ const mutations = {
     handleError(state, {data}) {    
         console.log('commit.handleError:');    
         console.log(data);
-        state.selected.forEach((key, value) => {
+        Object.keys(state.selected).forEach((key) => {
+            var value = state.selected[key];
             if (value && value.conId == data.contract.conId) {
                 value.delayedMktData = true;
             }

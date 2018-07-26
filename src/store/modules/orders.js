@@ -13,6 +13,9 @@ const actions = {
         // eslint-disable-next-line
         config.save(data);
     },
+    changeDir({ commit }, {id, dir}) { 
+        commit('changeDir', {id, dir});
+    },
     //swap directions
     swap({ commit }) { 
         commit('swap');
@@ -57,23 +60,32 @@ const mutations = {
             state.dirs[key] = (state.dirs[key] + 1) % 2; 
         });  
     },
+    changeDir(state, {id, dir}) { 
+        state.dirs[id] = dir;
+    },
     changeLots(state, {id, lots}) { 
         state.lots[id] = lots;
     },
     calLinkedLots(state, {id}) { 
-        var t1 = Symbol.state.tickers[Symbol.state.selected['s1'].conId];
-        var t2 = Symbol.state.tickers[Symbol.state.selected['s2'].conId];
-        var p1 = t1.last ? t1.last : t1.marketPrice;
-        var p2 = t2.last ? t2.last : t2.marketPrice;
+        var s1 = Symbol.state.selected['s1'];
+        var s2 = Symbol.state.selected['s2'];
+        if (s1 && s2) {
+            var t1 = Symbol.state.tickers[s1.conId];
+            var t2 = Symbol.state.tickers[s2.conId];
+            if (t1 && t2) {
+                var p1 = t1.last ? t1.last : t1.marketPrice;
+                var p2 = t2.last ? t2.last : t2.marketPrice;
 
-        var linkedId = '';
-        if (id == 's1') {
-            linkedId = 's2'; 
-            state.lots[linkedId] = p1 * state.lots['s1'] / p2;
-        } else {
-            linkedId = 's1';
-            state.lots[linkedId] = p2 * state.lots['s2'] / p1;
-        }         
+                var linkedId = '';
+                if (id == 's1' && p1 > 0 && p2 > 0) {
+                    linkedId = 's2'; 
+                    state.lots[linkedId] = Math.round(p1 * state.lots['s1'] / p2);
+                } else if (id == 's2' && p1 > 0 && p2 > 0) {
+                    linkedId = 's1';
+                    state.lots[linkedId] = Math.round(p2 * state.lots['s2'] / p1);
+                }
+            }              
+        }               
     }
 };
 
