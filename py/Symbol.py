@@ -2,7 +2,7 @@ import sys
 import threading
 from ib_insync import *
 import pandas as pd
-from utils.tools import copy, Struct
+from utils.tools import copy, Struct, to_json
 from IBConnector import IBConnector
 from datetime import datetime
 import json
@@ -289,7 +289,8 @@ class Symbol:
             print(e)
 
     def __handleBarData(self, bars):
-        print(bars) 
+        print(bars)
+        if len(bars) == 0: return [] 
         result = []
         contract = Struct(*'conId secType symbol lastTradeDateOrContractMonth \
                         localSymbol exchange primaryExchange currency multiplier tradingClass'.split())()
@@ -364,11 +365,11 @@ class Symbol:
 
     #--TODOs: 1. get last 2. only lastest data by comparing timestamp
     def __onPendingTickers(self, tickers):
-        print('mktdata')
+        #print('mktdata')
         result = []
         
         #print('incoming size:' + str(len(tickers)))
-        #print(json.dumps(tickers, default=lambda o:o.__dict__ ))
+        #print(json.dumps(tickers, default=to_json ))
         for t in tickers:
             #this line must put insdie for loop to create a blank object every time
             ticker = Struct(*'contract bid bidSize ask askSize last lastSize high close low time volume'.split())()

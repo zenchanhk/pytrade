@@ -157,7 +157,7 @@
                         <icon name="calculate" :scale="1.6" color='white'></icon>
                     </a-button>
                 </div>           
-                <a-button @click="order" class="btn"
+                <a-button @click="!this.pending?order:cancel" class="btn"
                     :style="{'background-color': this.pending ? 'red':'rgb(41, 211, 41)'}">
                     {{!this.pending? "Order" : "Cancel"}}
                 </a-button>
@@ -174,8 +174,10 @@
                 class="tbl" 
                 :columns="columns" 
                 :dataSource="data" 
-                :scroll="{ x: 1150, y: 130 }"
+                :scroll="{ x: 1200, y: 250 }"
                 :pagination="false" 
+                :defaultExpandAllRows="true"
+                :expandRowByClick="true"
                 size="small"
                  >
                 <span slot="symbol" slot-scope="text, record">
@@ -199,10 +201,11 @@
                         lookupLots(record.contract.conId))}}</b></span>
                 </span>                 
                 <a slot="action" slot-scope="text, record" @click="cancel(record.contract)">Cancel</a>
-                
+                <div slot="expandedRowRender" slot-scope="record" style="margin: 0">
+                    <span v-show="record.error">{{record.error}}</span>
+                    </div>
             </a-table>
         </div>
-        
     </div>
 </template>
 
@@ -296,8 +299,8 @@ export default {
     components: {
         SymbolSearch
     },
-    props: {
-        
+    mounted() {
+        this.setCallbacks();
     },
     data () {
         /*eslint-disable */            
@@ -358,7 +361,7 @@ export default {
             }
         },
         dirlinked: function(val) {
-            if (val && dir1 == dir2) {
+            if (val && this.dir1 == this.dir2) {
                 this.changeDir({id: 's1', dir: 0});
                 this.changeDir({id: 's2', dir: 1});
             }
@@ -375,14 +378,20 @@ export default {
                 'changeDir': 'changeDir',
                 'changeLots': 'changeLots',
                 'calLinkedLots': 'calLinkedLots',
-                'clear': 'clear'
+                'clear': 'clear',
+                'setCallbacks': 'setCallbacks',
+                'placeOrders': 'placeOrders',
+                'cancelOrder': 'cancelOrder'
             }),
         order() {
             this.pending = !this.pending;
-            console.log(this.pending);
+            this.placeOrders();
         },
         cancel(contract) {
-            console.log(contract);
+            if (contract)
+                this.cancelOrder(contract);
+            else
+                this.cancelOrder();                
         },
         lookupLots(conId) {
             return conId == this.s1.conId ? this.lots1 : this.lots2;

@@ -151,6 +151,7 @@
                 @blur="onblur"
                 @search="search"
                 @keydown.esc="closeDropdown"
+                @keydown="onKeydown"
                 v-model="sValue"
                 />
             <div class="spin" v-show="this.loading"><a-spin size="small" /></div>            
@@ -329,6 +330,14 @@ export default {
         },
         onblur() {
             
+        },
+        onKeydown(e) {
+            if (e.keyCode == 9) {
+                this.isEditing = false;
+                this.isAway = true;
+                this.loading = false;
+                this.closeDropdown();
+            }
         },
         async search(val) {
             if (val) {

@@ -1,6 +1,7 @@
 
 //import * as moment from 'moment';
 import Status from './status';
+import Vue from 'vue';
 
 const NOT_FOUND = 'No symbol found';
 const DISCONNECTED = 'No connection';
@@ -23,6 +24,7 @@ function hisDataCallback(data) {
     actions.fillHidData({commit}, {data: d});
 } 
 
+/* {'contract': contract, 'error': errorString} */
 function errorCallback(data) {
     var d = data ? JSON.parse(data) : '';
     actions.handleError({commit}, {data: d});
@@ -30,12 +32,14 @@ function errorCallback(data) {
 
 // initial state
 const state = {
+    forcedUpdateUI: true,
     codes: {'s1': '', 's2': ''}, //value are strings get from search box
     selected: {'s1': null, 's2': null}, //value are contract; selected symbols 
     details: {'s1': NOT_FOUND, 's2': NOT_FOUND}, //values are objects containing contract details
     delayedConIds: new Set(),
     tickers: {}, // dictionary to store tick data, conId as key
     bars: {},   //store historical data bars
+    errors: {},
     order: {'s1': {contract: null, mktData: null}, 's2': {contract: null, mktData: null}},  //values are objects containing real time data
 };
 
@@ -62,6 +66,10 @@ const getters = {
         if (Object.prototype.toString.call(ids) === '[object Array]' && ids.length > 0) {
             ids.forEach((x) => {
                 if (state.tickers[x.conId]) {
+                    //append error msg if any
+                    if (state.errors[x.conId]) {
+                        state.tickers[x.conId]['error'] = state.errors[x.conId];
+                    }                    
                     result.push(state.tickers[x.conId]);
                 } else {
                     console.error('Cannot find symbol in tickers');
@@ -160,6 +168,9 @@ const actions = {
 
 // mutations
 const mutations = {
+    //forcedUpdateUI(state) {
+    //    state.forcedUpdateUI = !state.forcedUpdateUI;
+    //},
     fillContractDetails (state, {id, details}) {        
         if (details) {
             state.details[id] = details;
@@ -173,9 +184,7 @@ const mutations = {
         //console.log(data[0].last);
         if (data.length > 0) {
             data.forEach((x) => {
-                state.tickers[x.contract.conId] = x;   
-                var tmp = Object.assign({}, state.tickers);
-                state.tickers = tmp;
+                Vue.set(state.tickers, x.contract.conId, x);
             });
         }        
     },
@@ -185,7 +194,7 @@ const mutations = {
     fillHisData(state, {data}) {
         //console.log('fillTicker(commit):');
         //console.log(data[0].last);
-        state.bars[data[0].contract.conId] = data;
+        Vue.set(state.bars, data[0].contract.conId, data);
     },
     fillSelectedItem(state, {item}) {
         state.selected[item.id] = item.value;
@@ -199,6 +208,7 @@ const mutations = {
                 value.delayedMktData = true;
             }
         });
+        Vue.set(state.errors, data.contract.conId, data.error);
     }
 };
 

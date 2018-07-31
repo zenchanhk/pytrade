@@ -6,7 +6,7 @@ import threading
 from IBConnector import IBConnector
 from ib_insync import *
 from Symbol import Symbol
-from Order import Order
+from PlaceOrder import PlaceOrder
 from configobj import ConfigObj
 from collections import namedtuple
 from utils.tools import copyall
@@ -140,7 +140,7 @@ def set_javascript_bindings(browser):
     #symbol.subMktData(12087792) 
     #time.sleep(5)
     #symbol.unsubMktData(12087792)
-    order = Order(ibcon)
+    order = PlaceOrder(ibcon)
     
 
     bindings = cef.JavascriptBindings(
