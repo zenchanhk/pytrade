@@ -9,7 +9,7 @@ import store from './store/index';
 import Icon from 'vue-svg-icon/Icon.vue';
 import VueResizeSensor from 'vue-resizesensor';
 import VueDraggableResizable from 'vue-draggable-resizable';
-import VueObserveVisibility from 'vue-observe-visibility'
+import VueObserveVisibility from 'vue-observe-visibility';
 
 Vue.config.productionTip = false;
 

@@ -3,13 +3,13 @@ import platform
 import sys
 import os
 import threading
-from IBConnector import IBConnector
+from .IBConnector import IBConnector
 from ib_insync import *
-from Symbol import Symbol
-from PlaceOrder import PlaceOrder
+from .Symbol import Symbol
+from .PlaceOrder import PlaceOrder
 from configobj import ConfigObj
 from collections import namedtuple
-from utils.tools import copyall
+from .utils.tools import copyall
 import json
 
 WINDOWS = (platform.system() == "Windows")

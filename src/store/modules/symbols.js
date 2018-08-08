@@ -1,10 +1,12 @@
 
 //import * as moment from 'moment';
-import Status from './status';
+//import Status from './status';
+import Orders from './orders';
 import Vue from 'vue';
+//import { stat } from 'fs';
 
 const NOT_FOUND = 'No symbol found';
-const DISCONNECTED = 'No connection';
+//const DISCONNECTED = 'No connection';
 
 var commit = null;
 
@@ -21,7 +23,7 @@ function mktDataCallback(data) {
 function hisDataCallback(data) {
     data = data.replace(/nan/ig, 'null');
     var d = data ? JSON.parse(data) : '';
-    actions.fillHidData({commit}, {data: d});
+    actions.fillHisData({commit}, {data: d});
 } 
 
 /* {'contract': contract, 'error': errorString} */
@@ -30,17 +32,21 @@ function errorCallback(data) {
     actions.handleError({commit}, {data: d});
 } 
 
+function updateOrderStatus({ id, trade, error, changed }) {
+    actions.updateOrderStatus({commit}, { id, trade, error, changed });
+}
+
 // initial state
 const state = {
-    forcedUpdateUI: true,
     codes: {'s1': '', 's2': ''}, //value are strings get from search box
-    selected: {'s1': null, 's2': null}, //value are contract; selected symbols 
+    selected: {'s1': null, 's2': null}, //value are contract and trade status; selected symbols 
     details: {'s1': NOT_FOUND, 's2': NOT_FOUND}, //values are objects containing contract details
     delayedConIds: new Set(),
     tickers: {}, // dictionary to store tick data, conId as key
     bars: {},   //store historical data bars
     errors: {},
-    order: {'s1': {contract: null, mktData: null}, 's2': {contract: null, mktData: null}},  //values are objects containing real time data
+    trades: {},  //values are trades
+    tradeErr: {}
 };
 
 //getters
@@ -69,6 +75,22 @@ const getters = {
                     //append error msg if any
                     if (state.errors[x.conId]) {
                         state.tickers[x.conId]['error'] = state.errors[x.conId];
+                    }
+                    if (state.tradeErr[x.conId]) {
+                        state.tickers[x.conId]['error'] = state.tradeErr[x.conId];
+                    }
+                    if (state.trades[x.conId]) {
+                        state.tickers[x.conId]['trade'] = state.trades[x.conId];
+                        //messages from log
+                        var msgs = [];
+                        for (var l in state.trades[x.conId].log) {
+                            if (l.message) {
+                                msgs.push(l.message);
+                            }                        
+                        }
+                        if (msgs.length) {
+                            state.tickers[x.conId]['messages'] = msgs;
+                        }
                     }                    
                     result.push(state.tickers[x.conId]);
                 } else {
@@ -111,10 +133,17 @@ const actions = {
     fillHisData({ commit }, {data}) {
         commit('fillHisData', {data});
     },
-    setErrorCallback({ commit }) {
+    setCallbacks({ commit }) {
         setCommit(commit);
         // eslint-disable-next-line
         symbol.setErrorCallback('', errorCallback);
+        // eslint-disable-next-line
+        symbol.setHisDataCallback('', hisDataCallback);
+        //add observers to order status change events
+        Orders.addObserver(updateOrderStatus);
+    },
+    updateOrderStatus({ commit }, { id, trade, error, changed }) {
+        commit('updateOrderStatus', { id, trade, error, changed });
     },
     handleError({ commit }, {data}) {
         commit('handleError', {data});
@@ -168,9 +197,32 @@ const actions = {
 
 // mutations
 const mutations = {
-    //forcedUpdateUI(state) {
-    //    state.forcedUpdateUI = !state.forcedUpdateUI;
-    //},
+    updateOrderStatus(state, { id, trade, error, changed }) {
+        //get all conIds from selected
+        if (!id && trade) id = trade.contract.conId;
+        //search in selected dict
+        var idx = -1;
+        Object.keys(state.selected).forEach(key => {
+            if (state.selected[key] && id) {
+                if (id == state.selected[key].conId) {
+                    idx = key;
+                }
+            }
+        });        
+
+        if (changed == 'status') {
+            Vue.set(state.trades, id, trade);
+            //attach trade to selected            
+            if (idx != -1) {
+                state.selected[idx]['trade'] = trade;
+                Vue.set(state.selected, idx, state.selected[idx]);                
+            }
+        } else if (changed == 'error') {
+            Vue.set(state.tradeErr, id, error);            
+        }   
+        Vue.set(state.tickers, id, state.tickers[id]);     
+        console.log(state.tickers);
+    },
     fillContractDetails (state, {id, details}) {        
         if (details) {
             state.details[id] = details;

@@ -2,8 +2,8 @@ import sys
 import threading
 from ib_insync import *
 import pandas as pd
-from utils.tools import copy, Struct, to_json
-from IBConnector import IBConnector
+from .utils.tools import copy, Struct, to_json
+from .IBConnector import IBConnector
 from datetime import datetime
 import json
 import time
@@ -42,6 +42,10 @@ class Symbol:
     def setErrorCallback(self, val, js_cb):
         if hasattr(js_cb, 'Call'):
             self.error_cb = js_cb
+
+    def setHisDataCallback(self, val, js_cb):
+        if hasattr(js_cb, 'Call'):
+            self.hisData_cb = js_cb
 
     def onConnect(self, msg):
         #print(msg)
@@ -289,22 +293,26 @@ class Symbol:
             print(e)
 
     def __handleBarData(self, bars):
-        print(bars)
+        #print(bars)
         if len(bars) == 0: return [] 
         result = []
-        contract = Struct(*'conId secType symbol lastTradeDateOrContractMonth \
-                        localSymbol exchange primaryExchange currency multiplier tradingClass'.split())()
-        copy(contract, bars[0])
+        
+        #get contract details
+        contract = {}
+        if hasattr(bars, 'contract'):
+            contract = copy(bars.contract)
+        else:
+            print('cannot get contract details in __handleBarData')
+        
         for bar in bars:
             #this line must put insdie for loop to create a blank object every time
-            b = Struct(*'high close low time volume average'.split())()
-            copy(b, bar)   
+            b = copy(bar, None, True)
             b.contract = contract
             result.append(b)
         return result
 
     def __onBarUpdate(self, bars, hasNewBar):
-        print('historical data:')
+        #print('historical data:')
         result = self.__handleBarData(bars)  
                        
         if hasattr(self.hisData_cb, "Call"):
@@ -340,19 +348,13 @@ class Symbol:
         else:
             return None
 
+
     async def __subMktData(self, ib, contract):
         if type(contract) is int:
             contract = Contract(conId=contract)
-        #var containing full details
-        #full_c = Struct(*'conId secType symbol lastTradeDateOrContractMonth \
-        #                localSymbol exchange primaryExchange currency multiplier tradingClass'.split())()
-        #get the full detail of contract        
-        #tmp = await ib.reqContractDetailsAsync(contract)
-        #copy(tmp[0], full_c)
-        #copy(tmp[0].contract, full_c)
-        #c = Contract(conId=full_c.conId, exchange=full_c.exchange)
+        
         await ib.qualifyContractsAsync(contract)
-        #copy(contract, full_c)
+        
         #start to request market data
         ib.reqMarketDataType(4) #enable delayed-frozen data
         ib.reqMktData(contract, '', False, False)
@@ -361,9 +363,8 @@ class Symbol:
         #add listener to tiker event for getting new tickers
         ib.pendingTickersEvent += self.__onPendingTickers
         print('subscribed')
-        #await asyncio.sleep(3)
 
-    #--TODOs: 1. get last 2. only lastest data by comparing timestamp
+
     def __onPendingTickers(self, tickers):
         #print('mktdata')
         result = []
@@ -378,7 +379,7 @@ class Symbol:
             self.__appendTicker(t.contract.conId, ticker, result)
         #convert datetime object to string YYYY-mm-DD HH:MM:SS:SSSSSSSS+z
         self.__convertTimeFormat(result)
-        print(json.dumps(result, default=lambda o:o.__dict__ ))
+        #print(json.dumps(result, default=lambda o:o.__dict__ ))
         #print(result[0])
         #if nothing from market data, then request historical data for the last trade day
         if len(result) == 1 and result[0].close == None:

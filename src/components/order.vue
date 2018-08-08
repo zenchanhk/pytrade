@@ -78,6 +78,24 @@
         height: 68px;
         justify-content: space-between;
     }
+    .div-details {
+        display: flex;
+        flex-direction: row;
+    }
+    .span-info {
+        background: lightpink;
+        border-radius: 3px;
+        padding: 5px;
+        margin-right: 10px;
+    }
+    .div-msg {
+        background: lightgray;
+        margin-top: 5px;   
+    }
+    .div-err {
+        background: lightsalmon;
+        margin-top: 5px;   
+    }
 </style>
 
 <template>
@@ -157,7 +175,7 @@
                         <icon name="calculate" :scale="1.6" color='white'></icon>
                     </a-button>
                 </div>           
-                <a-button @click="!this.pending?order:cancel" class="btn"
+                <a-button @click="()=>!this.pending?this.order():this.cancel()" class="btn"
                     :style="{'background-color': this.pending ? 'red':'rgb(41, 211, 41)'}">
                     {{!this.pending? "Order" : "Cancel"}}
                 </a-button>
@@ -195,15 +213,40 @@
                     <div class="data-icon-container">
                         <span>{{record.last}}</span>
                     </div>
+                </span>
+                <span slot="status" slot-scope="text, record">
+                    <div class="" v-if="record.trade">
+                        <span>{{(record.trade.orderStatus.filled > 0 && record.trade.orderStatus.filled &lt; record.trade.order.totalQuantity) ? 
+                                (record.trade.orderStatus.filled + ' / ' + record.trade.order.totalQuantity)
+                                : record.trade.orderStatus.status}}</span>
+                    </div>
                 </span>  
                 <span slot="total" slot-scope="text, record">
                     <span><b>{{Math.round((record.last ? record.last : record.marketPrice) * 
-                        lookupLots(record.contract.conId))}}</b></span>
+                        lookupLots(record.contract.conId) * (record.contract.multiplier?record.contract.multiplier:1))}}</b></span>
                 </span>                 
-                <a slot="action" slot-scope="text, record" @click="cancel(record.contract)">Cancel</a>
+                <a slot="action" slot-scope="text, record" 
+                    @click="cancel(record.contract)" 
+                    v-if="record.trade && cancellableStatus.includes(record.trade.orderStatus.status)">Cancel</a>
                 <div slot="expandedRowRender" slot-scope="record" style="margin: 0">
-                    <span v-show="record.error">{{record.error}}</span>
+                    <div class="div-details" v-if="record.trade" >
+                        <span class="span-info" >{{'Action: ' + record.trade.order.action}}</span>
+                        <span class="span-info" >{{'Order Type: ' + record.trade.order.orderType}}</span>
+                        <span class="span-info" >{{'Quantity: ' + (record.trade.orderStatus.filled + ' / ' + record.trade.order.totalQuantity)}}</span>
+                        <span class="span-info" >{{'Avg Price: ' + record.trade.orderStatus.avgFillPrice}}</span>
+                        <span class="span-info" >{{'Commission: ' + 
+                            (record.trade.comcur?(record.trade.comcur + record.trade.commission):'--')}}</span>
                     </div>
+                    <div class="div-msg" v-if="record.msgs" >
+                        <div v-for="(msg, index) in record.msgs" :key="index" >
+                            <span>{{msg}}</span>
+                        </div>
+                    </div> 
+                        
+                    <div class="div-err" v-if="record.error" >
+                        <span>{{record.error}}</span>
+                    </div>
+                </div>
             </a-table>
         </div>
     </div>
@@ -211,12 +254,50 @@
 
 <script>
 import Vue from 'vue';
-import { mapGetters, mapActions } from 'vuex';
+import { mapGetters, mapActions, mapState } from 'vuex';
 import SymbolSearch  from './symbol-search.vue';
 import { isNumeric } from '../utils/tools.js';
 import * as moment from 'moment';
 
 Object.defineProperty(Vue.prototype, '$moment', { value: moment });
+
+function progressBg(record) {
+    var per = 0;
+    var bg = '';
+    if (record.trade) {
+        per = Math.round(record.trade.orderStatus.filled * 100 / 
+            (record.trade.orderStatus.filled + record.trade.orderStatus.remaining));
+    }
+    if (record.trade) {
+        switch (record.trade.orderStatus.status) {
+            case 'PreSubmitted':
+            case 'PendingSubmit':
+                bg = 'yellow';
+                break;
+            case 'Submitted':
+                
+                break;
+            case 'Filled':
+                bg = 'yellowgreen';
+                break;
+            case 'PnedingCancel':
+                bg = 'lightcoral';
+                break;
+            case 'Cancelled':
+                bg = 'red';
+                break;
+            default:
+                bg = 'grey';
+                break;
+        }
+    }
+    
+    return {
+        style: {            
+            'background': (per > 0 && per < 1) ? `linear-gradient(to right, yellowgreen ${per}%, white ${100-per}%)` : bg
+        }
+    };
+}
 
 const columns = [
     { 
@@ -225,6 +306,9 @@ const columns = [
         key: 'symbol', 
         fixed: 'left',
         scopedSlots: { customRender: 'symbol' }, 
+        customCell: function (record) { 
+            return progressBg(record);
+        }
     },
     {
         title: 'Last',
@@ -263,7 +347,7 @@ const columns = [
                 style: {
                     'background-color': 'yellow',
                 }
-            }
+            };
         }   },
     { title: 'Volume', dataIndex: 'volume', key: '4', width: 80 },
     { title: 'Close', dataIndex: 'close', key: '5', width: 80 },
@@ -274,13 +358,9 @@ const columns = [
         key: '8',
         fixed: 'right',
         width: 100,
-        //scopedSlots: { customRender: 'status' },
+        scopedSlots: { customRender: 'status' },
         customCell: function (record) {            
-            return {
-                style: {
-                    'background-color': record.order ? 'red' : 'white'
-                }
-            };
+            return progressBg(record);
         }
     },
     {
@@ -310,18 +390,21 @@ export default {
             //data: [],
             value: null,
             dirs: [
-                {value: 0, label: 'Up'},
-                {value: 1, label: 'Down'},
+                {value: 0, label: 'LONG'},
+                {value: 1, label: 'SHORT'},
             ],
+            
         }
     },
     computed: {
+        ...mapState('orders', [
+            'cancellableStatus',
+            'completeStatus'
+        ]),
         ...mapGetters('symbols', {
             currentItem: 'getCurItem',
             data: 'getMktData',         //get market data for symbols
             selectedItems: 'getSelectedItems',
-            //s1: "selected('s1')",
-            //s2: "selected('s2')",
             s1: 's1',
             s2: 's2',
         }),
@@ -351,6 +434,9 @@ export default {
             if (!val) {
                 this.changeLots({id: 's1', lots: 0});
             }
+            if (val && val.trade) {
+                this.calPendingStatus();
+            }
         },
         s2: function(val) {
             if (val && this.lotslinked) {
@@ -358,6 +444,9 @@ export default {
             }
             if (!val) {
                 this.changeLots({id: 's2', lots: 0});
+            }
+            if (val && val.trade) {
+                this.calPendingStatus();
             }
         },
         dirlinked: function(val) {
@@ -381,8 +470,14 @@ export default {
                 'clear': 'clear',
                 'setCallbacks': 'setCallbacks',
                 'placeOrders': 'placeOrders',
-                'cancelOrder': 'cancelOrder'
-            }),
+                'cancelOrder': 'cancelOrder',
+            }),        
+        calPendingStatus() {
+            if ((!s1 || (s1 && s1.trade && this.completeStatus.includes(s1.trade.orderStatus.status))) ||
+                (!s2 || (s2 && s2.trade && this.completeStatus.includes(s2.trade.orderStatus.status)))) {
+                this.pending = false;
+            }
+        },
         order() {
             this.pending = !this.pending;
             this.placeOrders();

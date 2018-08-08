@@ -106,7 +106,7 @@
                 <Pane title="Real Time Data" v-resize:debounce="onResize">
                     <div style="display: relative; height: 100%">
                         <resize-sensor @resized="onResize" :debounce="50"></resize-sensor>
-                    <RTData />
+                    <all-orders />
                     </div>
                 </Pane>
                 <Pane title="Miscellaneous">
@@ -157,7 +157,7 @@
 <script>
     import Vue from 'vue';
     import Order from '@/components/order.vue';
-    import RTData from '@/components/RTData.vue';
+    import AllOrders from '@/components/allorders.vue';
     import Settings from '@/components/settings.vue';
     import Connecting from '@/components/connecting.vue';
     import { Layout, Pane } from 'vue-split-layout';
@@ -194,11 +194,11 @@
             //set IBConnect callback
             this.setCallback();
             this.readSettings();
-            this.setErrorCallback();
+            this.setSymbolCallbacks();
         },
         components: {
             Order,
-            RTData,
+            AllOrders,
             Settings,
             Layout, Pane
         },
@@ -258,7 +258,7 @@
                 'setCallback': 'setCallback',                
             }),
             ...mapActions('symbols', {
-                'setErrorCallback': 'setErrorCallback',                
+                'setSymbolCallbacks': 'setCallbacks',                
             }),
             showSettings() {
                 this.settingsDialogVisiable = true;

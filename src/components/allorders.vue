@@ -20,7 +20,7 @@
 const columns = [
     { title: 'Column 1', dataIndex: 'address', key: '1', width: 100,
         customCell: function (record) {
-            //console.log(record);
+            console.log(record);
             return {
                 style: {
                     'background-color': 'lightgreen'
@@ -42,7 +42,7 @@ for (let i = 0; i < 10; i++) {
 }
 
 export default {
-    name: 'RTData',    
+    name: 'all-orders',    
     components: {
     },
     data () {
